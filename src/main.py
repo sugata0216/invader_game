@@ -98,13 +98,17 @@ def gamestage():
         if ufo.right > 800 or ufo.left < 0:
             hit_edge = True
         ## 自機の弾とufoの衝突処理
-        if ufo.colliderect(bulletrect):
+        if ufo.colliderect(bulletrect) and ufo.width > 0:
             # score += 1000
-            ufo.y = -100
-            ufo.x = random.randint(0, 750)
+            ufo.width = 0   # UFOの幅を0にする
+            ufo.height = 0  # UFOの高さを0にする
+            # ufo.y = -1000
+            # ufo.x = random.randint(0, 750)
             bulletrect.y = -100
             # pg.mixer.Sound("").play()
-        screen.blit(ufoimg, ufo)
+        if ufo.width > 0:
+            screen.blit(ufoimg, ufo)
+        # screen.blit(ufoimg, ufo)
     # 画面端に到達していたら方向を反転し、一段下に移動
     if hit_edge:
         ufo_direction *= -1
