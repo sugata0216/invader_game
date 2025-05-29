@@ -1,20 +1,26 @@
 import pygame as pg, sys
 import random
+from pygame import mixer
 
 pg.init()
+mixer.init()
 screen = pg.display.set_mode((800, 600))
+##BGM
+mixer.music.load("assets/sounds/black-box-cozy-forest-122347.mp3")
+mixer.music.play(-1)
+
 ## 自機データ
 myship_speed = 5
-myimg = pg.image.load("assets/images/myship.png")
+myimg = pg.image.load("assets/images/myship2.png")
 myimg = pg.transform.scale(myimg, (50, 50))
 myrect = pg.Rect(400, 500, 50, 50)
 ## 自機の弾
-bulletimg = pg.image.load("assets/images/bullet.png")
+bulletimg = pg.image.load("assets/images/laser.png")
 bulletimg = pg.transform.scale(bulletimg, (16, 16))
 bulletrect = pg.Rect(400, -100, 16, 16)
 # replay = pg.image.load("")
 ## 敵
-ufoimg = pg.image.load("assets/images/ufo.png")
+ufoimg = pg.image.load("assets/images/enemy1_1.png")
 ufoimg = pg.transform.scale(ufoimg, (50, 50))
 ufos = []
 ufo_speeds = [] # 各UFOの横方向の速度
@@ -37,7 +43,7 @@ page = 1
 player_life = 3
 # score = 0
 
-replay_img = pg.image.load("assets/images/ufo.png")
+replay_img = pg.image.load("assets/images/enemy1_1.png")
 ## btnを押したら、newpageにジャンプ
 def button_to_jamp(btn, newpage):
     global page, pushFlag
@@ -77,12 +83,12 @@ def gamestage():
     if keys[pg.K_SPACE] and bulletrect.y < 0 and can_shoot:
         bulletrect.x = myrect.x + 25 - 8
         bulletrect.y = myrect.y
-        # pg.mixer.Sound("").play()
+        pg.mixer.Sound("assets/sounds/ビーム砲1.mp3").play()
         can_shoot = False # 自機の弾が発射されたら連射を禁止
     if mdown[0] and bulletrect.y < 0:
         bulletrect.x = myrect.x + 25 - 8
         bulletrect.y = myrect.y
-        # pg.mixer.Sound("").play()
+        pg.mixer.Sound("assets/sounds/ビーム砲1.mp3").play()
     if bulletrect.y >= 0:
         bulletrect.y += -15
         screen.blit(bulletimg, bulletrect)
@@ -150,6 +156,8 @@ def gamereset():
     global can_shoot, pushFlag
     global enemy_bullets
     global player_life
+    global ufo_direction
+    # score = 0
     player_life = 3
     enemy_bullets = []
     myrect.x = 400
@@ -157,8 +165,13 @@ def gamereset():
     bulletrect.y = -100
     can_shoot = True
     pushFlag = False
-    for i in range(10):
-        ufos[i] = pg.Rect(random.randint(0, 800), -100 * i, 50, 50)
+    ufo_direction = 1
+    ufos.clear()
+    ufo_speeds.clear()
+    for yy in range(4):
+        for xx in range(7):
+            ufos.append(pg.Rect(50+xx*100, 40+yy*50, 50, 50)) # UFOのサイズを50,50に修正
+            ufo_speeds.append(2) # 初期速度
 ## ゲームオーバー
 def gameover():
     screen.fill(pg.Color("BLACK"))
