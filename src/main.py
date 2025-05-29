@@ -33,7 +33,7 @@ for yy in range(4):
         ufo_speeds.append(2) # 初期速度
 
 pushFlag = False
-page = 1
+page = 1 # 1: ゲーム, 2: ゲームオーバー, 3: ヘルプ
 player_life = 3
 # score = 0
 
@@ -44,13 +44,13 @@ def button_to_jamp(btn, newpage):
     # ユーザーからの入力を調べる
     mdown = pg.mouse.get_pressed()
     (mx, my) = pg.mouse.get_pos()
-    if mdown[0]:
+    if mdown[0]: # マウスボタンが押されている
         # pg.mixer.Sound("").play()
-        if btn.collidepoint(mx, my) and pushFlag == False:
+        if btn.collidepoint(mx, my) and not pushFlag:
             page = newpage
-            pushFlag = True
+            pushFlag = True # ボタン押下済みとマーク
         else:
-            pushFlag = False
+            pushFlag = False # ボタンを離したことを検出
             
 ## ゲームステージ
 def gamestage():
@@ -143,6 +143,8 @@ def gamestage():
     # ハートアイコンで残機表示(左下)
     for i in range(player_life):
         screen.blit(heart_img, (130 + i * 35, 560)) # 画面左下に並べて表示
+    text_help = font.render("H:HELP", True, pg.Color("WHITE"))
+    screen.blit(text_help, (700, 560))
 ## データのリセット
 def gamereset():
     # global score
@@ -176,13 +178,44 @@ def gameover():
     ## ボタンを押してリプレイしたら、ゲームをリセット
     if page == 1:
         gamereset()
-        
+def help_page():
+    global page, pushFlag
+    screen.fill(pg.Color("BLACK"))
+    # (ここから下に通常の描画やボタンの処理を書く)
+    jp_font = pg.font.Font("assets/fonts/NotoSansJP-Regular.ttf", 30)
+    font_title = pg.font.Font(None, 80)
+    font_text = pg.font.Font(None, 40)
+    title = font_title.render("HELP", True, pg.Color("WHITE"))
+    screen.blit(title, (330, 40))
+    help_text = [
+        "== 操作方法 ==",
+        "← → : 自機の移動",
+        "スペースキー or マウス左クリック : 弾を発射",
+        "Hキー : ヘルプ表示",
+        "戻るには Bキー を押してください"
+        "",
+        "== ゲームルール ==",
+        "・敵のUFOをすべて倒そう",
+        "・敵の弾に当たるとライフが減る",
+        "・ライフが0になるとゲームオーバー",
+        ""
+    ]
+    for i, line in enumerate(help_text):
+        text = jp_font.render(line, True, pg.Color("WHITE"))
+        screen.blit(text, (100, 150 + i * 40))
+    keys = pg.key.get_pressed()
+    if keys[pg.K_b]: # Bキーで戻る
+        global page
+        page = 1
+            
 # この下をずっとループ
 while True:
     if page == 1:
         gamestage()
     elif page == 2:
         gameover()
+    elif page == 3:
+        help_page()
     # 画面を表示
     pg.display.update()
     pg.time.Clock().tick(60)
@@ -191,3 +224,6 @@ while True:
         if event.type == pg.QUIT:
             pg.quit()
             sys.exit()
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_h and page == 1:
+                page = 3 # ヘルプ画面に遷移
