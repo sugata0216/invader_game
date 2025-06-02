@@ -10,6 +10,10 @@ difficulty = "normal" # "easy", "normal", "hard"
 mixer.music.load("assets/sounds/black-box-cozy-forest-122347.mp3")
 mixer.music.play(-1)
 
+## 戻るボタン
+returnimg = pg.image.load("assets/images/Uターン矢印 1.png")
+returnimg = pg.transform.scale(returnimg, (35, 35))
+returnrect = pg.Rect(320, 310, 35, 35)
 ## 自機データ
 myship_speed = 5
 myimg = pg.image.load("assets/images/myship2.png")
@@ -204,15 +208,22 @@ def gameover():
     font_small = pg.font.Font(None, 40)
     text2 = font_small.render("Click the image to Replay", True, pg.Color("WHITE"))
     screen.blit(text2, (240, 450))
+    button_to_jamp(btn1, 1)
+    font_title = pg.font.Font(None, 40)
+    text_title = font_title.render("Return to title", True, pg.Color("WHITE"))
+    screen.blit(text_title, (240, 260))
+    btn2 = screen.blit(returnimg, (320, 310))
+    button_to_jamp(btn2, 0)
     font = pg.font.Font(None, 40)
     text = font.render("LIFE : 0", True, pg.Color("WHITE"))
     screen.blit(text, (20, 180))
     # text = font.render("SCORE : "+str(score), True, pg.Color("WHITE"))
     # 絵をかいたり、判定したりする
-    button_to_jamp(btn1, 1)
     ## ボタンを押してリプレイしたら、ゲームをリセット
     if page == 1:
-        gamereset()
+         gamereset()
+    elif page == 0:
+        difficulty_select_page
 def help_page():
     global page, pushFlag
     screen.fill(pg.Color("BLACK"))
