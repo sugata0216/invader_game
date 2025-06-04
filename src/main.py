@@ -91,6 +91,10 @@ def gamestage():
     ## 自機の処理
     # myrect.x = mx - 25
     screen.blit(myimg, myrect)
+    if myrect.left < 0:
+        myrect.left = 0
+    if myrect.right > 800:
+        myrect.right = 800
     ## 自機の弾の処理
     if keys[pg.K_SPACE] and bulletrect.y < 0 and can_shoot:
         bulletrect.x = myrect.x + 25 - 8
@@ -124,6 +128,10 @@ def gamestage():
             # ufo.x = random.randint(0, 750)
             bulletrect.y = -100
             # pg.mixer.Sound("").play()
+        ## 自機とufoの衝突処理
+        if ufo.colliderect(myrect):
+            page = 2
+            break
         if ufo.width > 0:
             screen.blit(ufoimg, ufo)
         # screen.blit(ufoimg, ufo)
@@ -163,7 +171,13 @@ def gamestage():
         if bullet.top > 600:
             enemy_bullets.remove(bullet)
     # ライフ表示の前に線を引く
-    pg.draw.line(screen, pg.Color("WHITE"), (0, 548), (800, 548), 2)
+    line = pg.draw.line(screen, pg.Color("WHITE"), (0, 548), (800, 548), 2)
+    ## 線にufoが衝突したらgameover
+    for ufo in ufos:
+        if ufo.width > 0:
+            if ufo.colliderect(line):
+                page = 2
+                break
     # ライフ表示
     font = pg.font.Font(None, 40)
     text = font.render("LIFE : "+str(player_life), True, pg.Color("WHITE"))
