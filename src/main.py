@@ -35,7 +35,14 @@ ufo_drop_speed = 10 # UFOが一段落ちる時の速度
 enemy_bullet_img = pg.image.load("assets/images/enemy_bullet.png")
 enemy_bullet_img = pg.transform.scale(enemy_bullet_img, (16, 16))
 enemy_bullets = [] # 敵の弾リスト(Rectのリスト)
-
+boss_img = pg.image.load("assets/images/boss.png")
+boss_img = pg.transform.scale(boss_img, (120, 120))
+boss_rect = pg.Rect(340, 100, 120, 120)
+boss_hp = 30
+boss_bullets = [] # ボスの弾リスト
+boss_shoot_interval = 60 # 弾の発射間隔(フレーム数)
+boss_shoot_timer = 0
+boss_speed = 3
 heart_img = pg.image.load("assets/images/heart.png")
 heart_img = pg.transform.scale(heart_img, (30, 30)) # サイズ調整
 for yy in range(4):
@@ -155,6 +162,8 @@ def gamestage():
         # 画面外に出た弾を削除
         if bullet.top > 600:
             enemy_bullets.remove(bullet)
+    # ライフ表示の前に線を引く
+    pg.draw.line(screen, pg.Color("WHITE"), (0, 548), (800, 548), 2)
     # ライフ表示
     font = pg.font.Font(None, 40)
     text = font.render("LIFE : "+str(player_life), True, pg.Color("WHITE"))
@@ -167,8 +176,8 @@ def gamestage():
     ## --- ゲームクリア判定を追加 ---
     all_dead = all(ufo.width == 0 and ufo.height == 0 for ufo in ufos)
     if all_dead:
-        page = 4
-    
+        page = 5 # ボス戦へ
+        return
 ## データのリセット
 def gamereset():
     # global score
@@ -236,7 +245,7 @@ def help_page():
     help_text = [
         "== 操作方法 ==",
         "← → : 自機の移動",
-        "スペースキー or マウス左クリック : 弾を発射",
+        "スペースキー : 弾を発射",
         "Hキー : ヘルプ表示",
         "戻るには Bキー を押してください"
         "",
@@ -307,6 +316,84 @@ def difficulty_select_page():
             pushFlag = True
     if not mdown[0]:
         pushFlag = False
+def boss_battle():
+    global page, boss_hp, boss_shoot_timer, can_shoot, player_life, boss_speed
+    screen.fill(pg.Color("BLACK"))
+    keys = pg.key.get_pressed()
+    if keys[pg.K_LEFT]:
+        myrect.x -= myship_speed
+    if keys[pg.K_RIGHT]:
+        myrect.x += myship_speed
+    if keys[pg.K_SPACE] and bulletrect.y < 0 and can_shoot:
+        bulletrect.x = myrect.x + 25 - 8
+        bulletrect.y = myrect.y
+        pg.mixer.Sound("assets/sounds/ビーム砲1.mp3").play()
+        can_shoot = False
+    if bulletrect.y >= 0:
+        bulletrect.y += -15
+        screen.blit(bulletimg, bulletrect)
+    else:
+        can_shoot = True
+    for bullet in boss_bullets[:]:
+        bullet.y += 10
+        screen.blit(enemy_bullet_img, bullet)
+        if bullet.colliderect(myrect):
+            player_life -= 1
+            boss_bullets.remove(bullet)
+            if player_life <= 0:
+                page = 2 # ゲームオーバー
+        if bullet.top > 600:
+            boss_bullets.remove(bullet) 
+    # ボスを描画
+    screen.blit(boss_img, boss_rect)
+    font = pg.font.Font(None, 40)
+    text = font.render(f"BOSS HP: {boss_hp}", True, pg.Color("WHITE"))
+    screen.blit(text, (600, 20))
+    # ボス移動
+    boss_rect.x += boss_speed
+    if boss_rect.right >= 800 or boss_rect.left <= 0:
+        boss_speed *= -1 # 端についたら反転
+    # 自機描画
+    screen.blit(myimg, myrect)
+    # 自機の弾
+    if bulletrect.y >= 0:
+        bulletrect.y += -15
+        screen.blit(bulletimg, bulletrect)
+        if bulletrect.colliderect(boss_rect):
+            boss_hp -= 1
+            bulletrect.y = -100
+            if boss_hp <= 0:
+                page = 4 # ←ゲームクリア画面に遷移
+                gameclear()
+                return # 以降の処理を防ぐ
+    else:
+        can_shoot = True
+    # ライフ表示
+    font = pg.font.Font(None, 40)
+    text = font.render("LIFE : "+str(player_life), True, pg.Color("WHITE"))
+    screen.blit(text, (20, 560))
+    # ハートアイコンで残機表示(左下)
+    for i in range(player_life - 1):
+        screen.blit(myimg, (130 + i * 35, 550)) # 画面左下に並べて表示
+    # ボスの弾発射
+    boss_shoot_timer += 1
+    if boss_shoot_timer >= boss_shoot_interval:
+        boss_bullet_rect = pg.Rect(boss_rect.centerx - 5, boss_rect.bottom, 10, 20)
+        boss_bullets.append(boss_bullet_rect)
+        pg.mixer.Sound("assets/sounds/ビーム砲1.mp3").play()
+        boss_shoot_timer = 0
+    # ボス弾の移動と描画
+    for bullet in boss_bullets[:]:
+        bullet.y += 10 # 弾を下に移動
+        screen.blit(enemy_bullet_img, bullet) # 画像で表示
+        if bullet.top > 600:
+            boss_bullets.remove(bullet)
+    for bullet in boss_bullets[:]:
+        if bullet.colliderect(myrect):
+            player_life -= 1
+            boss_bullets.remove(bullet)
+            if player_life <= 0:
+                page = 2 # ゲームオーバー
 # この下をずっとループ
 while True:
     # 例:0=難易度選択, 1=ゲーム, 2=ゲームオーバー, 3=ヘルプ, 4=ゲームクリア
@@ -320,6 +407,8 @@ while True:
         help_page()
     elif page == 4:
         gameclear()
+    elif page == 5:
+        boss_battle()
     # 画面を表示
     pg.display.update()
     pg.time.Clock().tick(60)
